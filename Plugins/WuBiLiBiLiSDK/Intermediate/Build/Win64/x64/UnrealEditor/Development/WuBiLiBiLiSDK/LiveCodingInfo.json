@@ -1,0 +1,19 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.WuBiLiBiLiSDK.cpp.obj": [
+			"BiLiBiLiSubsystem.gen.cpp.obj",
+			"WuBiLiBiLiApi.gen.cpp.obj",
+			"WuBiLiBiLiSDK.init.gen.cpp.obj",
+			"WuBiLiBiLiWebSocket.gen.cpp.obj",
+			"WuBInfo.gen.cpp.obj",
+			"WuCrypto.gen.cpp.obj",
+			"BiLiBiLiSubsystem.cpp.obj",
+			"WuBiLiBiLiApi.cpp.obj",
+			"WuBiLiBiLiSDK.cpp.obj",
+			"WuBiLiBiLiWebSocket.cpp.obj",
+			"WuBInfo.cpp.obj",
+			"WuCrypto.cpp.obj"
+		]
+	}
+}
