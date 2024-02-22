@@ -3,6 +3,10 @@
 
 需要UE5 5.3
 
+如需要支持其他版本，请看（注意：只支持UE5，不支持UE4）：
+https://www.bilibili.com/video/BV1Jk4y157mh/
+
+
 # 使用文档：
 B站弹幕互动官方文档： https://open-live.bilibili.com/document
 
