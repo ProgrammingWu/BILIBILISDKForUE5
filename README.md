@@ -1,7 +1,7 @@
 # BILIBILISDKForUE5
  UE5 哔哩哔哩的直播互动插件。可以用此插件制作弹幕互动游戏
 
-需要UE5 5.3
+支持UE5 5.4
 
 如需要支持其他版本，请看（注意：只支持UE5，不支持UE4）：
 https://www.bilibili.com/video/BV1Jk4y157mh/
