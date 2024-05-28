@@ -2,6 +2,7 @@
  UE5 哔哩哔哩的直播互动插件。可以用此插件制作弹幕互动游戏
 
 支持UE5 5.4
+2024.05.28更新：支持最新的B站API（支持解析open_id）
 
 如需要支持其他版本，请看（注意：只支持UE5，不支持UE4）：
 https://www.bilibili.com/video/BV1Jk4y157mh/
