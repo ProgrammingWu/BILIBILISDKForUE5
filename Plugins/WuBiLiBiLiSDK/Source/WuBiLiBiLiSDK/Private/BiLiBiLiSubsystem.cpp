@@ -22,7 +22,7 @@ void UBiLiBiLiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	BIWebSocket = nullptr;
 	//bapi = MakeShareable(new WuBiLiBiLiApi(this->GetOuterUGameInstance()));
 	bapi = NewObject<UWuBiLiBiLiApi>();
-	bapi->AddToRoot();
+	
 	bapi->init(GetOuterUGameInstance());
 	UE_LOG(LogClass,Log,TEXT("加载UBiLiBiLiSubsystem子系统"));
 	UKismetSystemLibrary::PrintString(this, FString(TEXT("加载UBiLiBiLiSubsystem子系统")));
@@ -30,11 +30,7 @@ void UBiLiBiLiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UBiLiBiLiSubsystem::Deinitialize()
 {
-	if (bapi) {
-		bapi->RemoveFromRoot();
-	}
 	if (BIWebSocket) {
-		BIWebSocket->RemoveFromRoot();
 		if (BIWebSocket->islink()) {
 			bapi->sendEnd(game_idstr, AppId, nullptr);
 			UE_LOG(LogClass, Log, TEXT("未正常关闭和B站链接，已自动发送给B站服务器关闭消息"));
@@ -70,16 +66,16 @@ void UBiLiBiLiSubsystem::start()
 			messageJson.JsonObjectFromString(message);
 
 			//=========解析信息============
-			TSharedPtr<FJsonObject> dataJson = messageJson.JsonObject->GetObjectField("data");
+			TSharedPtr<FJsonObject> dataJson = messageJson.JsonObject->GetObjectField(TEXT("data"));
 			//-------------解析场次信息------------
 			// 用于保持项目心跳的GameID
-			game_idstr = dataJson->GetObjectField("game_info")->GetStringField("game_id"); 
+			game_idstr = dataJson->GetObjectField(TEXT("game_info"))->GetStringField(TEXT("game_id")); 
 			//----------解析长链信息---------------
-			TSharedPtr<FJsonObject> websocket_infoJson = dataJson->GetObjectField("websocket_info");
-			FString auth_body = websocket_infoJson->GetStringField("auth_body"); //保持长链心跳，发送的消息
+			TSharedPtr<FJsonObject> websocket_infoJson = dataJson->GetObjectField(TEXT("websocket_info"));
+			FString auth_body = websocket_infoJson->GetStringField(TEXT("auth_body")); //保持长链心跳，发送的消息
 
 
-			TArray<TSharedPtr<FJsonValue>>wss_links =  websocket_infoJson->GetArrayField("wss_link");
+			TArray<TSharedPtr<FJsonValue>>wss_links =  websocket_infoJson->GetArrayField(TEXT("wss_link"));
 			TArray<FString> wss_linkStrs; //长链地址
 			for (auto wss_link : wss_links) {
 				wss_linkStrs.Add(wss_link->AsString());
@@ -91,7 +87,6 @@ void UBiLiBiLiSubsystem::start()
 			//-----新建长链------------
 			if (!BIWebSocket) {
 				BIWebSocket = NewObject<UWuBiLiBiLiWebSocket>();
-				BIWebSocket->AddToRoot();
 			}
 			BIWebSocket->createWebSocket(wss_linkStrs[0], auth_body, game_idstr, GetOuterUGameInstance(), [this](bool isSuccess, FString message) {
 				
@@ -141,6 +136,7 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			FDanMu danmu;
 			danmu.uname = dataJson->GetStringField(TEXT("uname"));
 			danmu.uid = dataJson->GetNumberField(TEXT("uid"));
+			danmu.open_id = dataJson->GetStringField(TEXT("open_id"));
 			danmu.uface = dataJson->GetStringField(TEXT("uface"));
 			danmu.timestamp = dataJson->GetNumberField(TEXT("timestamp"));
 			danmu.room_id = dataJson->GetNumberField(TEXT("room_id"));
@@ -162,6 +158,7 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			FGift gift;
 			gift.room_id = dataJson->GetNumberField(TEXT("room_id"));
 			gift.uid = dataJson->GetNumberField(TEXT("uid"));
+			gift.open_id = dataJson->GetStringField(TEXT("open_id"));
 			gift.uname = dataJson->GetStringField(TEXT("uname"));
 			gift.uface = dataJson->GetStringField(TEXT("uface"));
 			gift.gift_id = dataJson->GetNumberField(TEXT("gift_id"));
@@ -175,9 +172,10 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			gift.guard_level = dataJson->GetNumberField(TEXT("guard_level"));
 			gift.timestamp = dataJson->GetNumberField(TEXT("timestamp"));
 			//主播信息
-			TSharedPtr<FJsonObject> anchor_infoJson = dataJson->GetObjectField("anchor_info");
+			TSharedPtr<FJsonObject> anchor_infoJson = dataJson->GetObjectField(TEXT("anchor_info"));
 			FUserInfo userinfo;
 			userinfo.uid = anchor_infoJson->GetNumberField(TEXT("uid"));
+			userinfo.open_id = anchor_infoJson->GetStringField(TEXT("open_id"));
 			userinfo.uname = anchor_infoJson->GetStringField(TEXT("uname"));
 			userinfo.uface = anchor_infoJson->GetStringField(TEXT("uface"));
 			gift.anchor_info = userinfo;
@@ -187,7 +185,7 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			bool haveComboGift  = gift.combo_gift = dataJson->GetBoolField(TEXT("combo_gift"));
 			if (haveComboGift) {
 				//连击信息
-				TSharedPtr<FJsonObject> comboInfoJson = dataJson->GetObjectField("combo_info");
+				TSharedPtr<FJsonObject> comboInfoJson = dataJson->GetObjectField(TEXT("combo_info"));
 				FComboInfo comboinfo;
 				comboinfo.combo_base_num = comboInfoJson->GetNumberField(TEXT("combo_base_num"));
 				comboinfo.combo_count = comboInfoJson->GetNumberField(TEXT("combo_count"));
@@ -202,6 +200,7 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			FSuperChat superchat;
 			superchat.room_id = dataJson->GetNumberField(TEXT("room_id"));
 			superchat.uid = dataJson->GetNumberField(TEXT("uid"));
+			superchat.open_id = dataJson->GetStringField(TEXT("open_id"));
 			superchat.uname = dataJson->GetStringField(TEXT("uname"));
 			superchat.uface = dataJson->GetStringField(TEXT("uface"));
 			superchat.message_id = dataJson->GetNumberField(TEXT("message_id"));
@@ -231,9 +230,10 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 		else if (cmdstr.Equals(TEXT("LIVE_OPEN_PLATFORM_GUARD"))) {
 			FGuard guard;
 			//用户信息
-			TSharedPtr<FJsonObject> user_infoJson = dataJson->GetObjectField("user_info");
+			TSharedPtr<FJsonObject> user_infoJson = dataJson->GetObjectField(TEXT("user_info"));
 			FUserInfo userinfo;
 			userinfo.uid = user_infoJson->GetNumberField(TEXT("uid"));
+			userinfo.open_id = user_infoJson->GetStringField(TEXT("open_id"));
 			userinfo.uname = user_infoJson->GetStringField(TEXT("uname"));
 			userinfo.uface = user_infoJson->GetStringField(TEXT("uface"));
 			guard.user_info = userinfo;
@@ -253,6 +253,7 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			FLike like;
 			like.uname = dataJson->GetStringField(TEXT("uname"));
 			like.uid = dataJson->GetNumberField(TEXT("uid"));
+			like.open_id = dataJson->GetStringField(TEXT("open_id"));
 			like.uface = dataJson->GetStringField(TEXT("uface"));
 			like.timestamp = dataJson->GetNumberField(TEXT("timestamp"));
 			like.room_id = dataJson->GetNumberField(TEXT("room_id"));

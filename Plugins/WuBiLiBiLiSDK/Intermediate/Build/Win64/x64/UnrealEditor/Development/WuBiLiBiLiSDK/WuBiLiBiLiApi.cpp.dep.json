@@ -1,0 +1,33 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\private\\wubilibiliapi.cpp",
+        "ProvidedModule": "",
+        "PCH": "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\intermediate\\build\\win64\\x64\\bilibiliprojecteditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.cpp20.inclorderoldest.h.pch",
+        "Includes": [
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\wubilibilisdk\\definitions.wubilibilisdk.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\public\\wubilibiliapi.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\http.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\httpmodule.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\interfaces\\ihttprequest.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\interfaces\\ihttpbase.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\interfaces\\ihttpresponse.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\platformhttp.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\windows\\windowsplatformhttp.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\online\\http\\public\\genericplatform\\genericplatformhttp.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\public\\bilibilisubsystem.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\public\\wubinfo.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\intermediate\\build\\win64\\unrealeditor\\inc\\wubilibilisdk\\uht\\wubinfo.generated.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\intermediate\\build\\win64\\unrealeditor\\inc\\wubilibilisdk\\uht\\bilibilisubsystem.generated.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\intermediate\\build\\win64\\unrealeditor\\inc\\wubilibilisdk\\uht\\wubilibiliapi.generated.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\jsonutilities\\public\\jsonobjectwrapper.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\jsonutilities\\uht\\jsonobjectwrapper.generated.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\public\\wucrypto.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\engine\\classes\\kismet\\kismetsystemlibrary.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\source\\runtime\\coreuobject\\public\\uobject\\propertyaccessutil.h",
+            "d:\\app\\epicgame\\ue_5.4\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\kismetsystemlibrary.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

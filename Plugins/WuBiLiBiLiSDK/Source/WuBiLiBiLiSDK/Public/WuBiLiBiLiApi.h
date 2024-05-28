@@ -12,6 +12,7 @@ qq：1910991875
 
 #include "CoreMinimal.h"
 #include "Http.h"
+#include "BiLiBiLiSubsystem.h"
 #include "WuBiLiBiLiApi.generated.h"
 
 class UBiLiBiLiSubsystem;
@@ -41,7 +42,9 @@ private:
 	//发送Http请求
 	void sendHttpRequest(FString url, FString Data, CallBack callback);
 	void ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
+	UPROPERTY()
 	UGameInstance* GameInstance;
+	UPROPERTY()
 	UBiLiBiLiSubsystem* BiLiBiLiSubsystem;
 
 	TMap<FHttpRequestPtr, CallBack>  RequestMap;//储存Http请求，和对应的回调函数指针的数组

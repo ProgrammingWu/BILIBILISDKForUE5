@@ -27,8 +27,11 @@ struct  WUBILIBILISDK_API FDanMu {
 		// 用户昵称
 		FString uname;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
-		// 用户UID
+		// 用户UID(2024.05.28更新：因B站API废弃此变量，所以这个固定为0了，参见：open_id)
 		int64 uid;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
+	// 用户唯一标识（2024.05.28更新中添加）
+	FString open_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
 		// 用户头像
 		FString uface;
@@ -72,8 +75,11 @@ struct WUBILIBILISDK_API FUserInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
-		// 收礼主播uid
-		int64 uid;
+	// 用户UID(2024.05.28更新：因B站API废弃此变量，所以这个固定为0了，参见：open_id)
+	int64 uid;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
+	// 用户唯一标识（2024.05.28更新中添加）
+	FString open_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
 		// 收礼主播昵称
 		FString uname;
@@ -110,8 +116,11 @@ struct WUBILIBILISDK_API FGift
 		// 房间号
 		int64 room_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
-		// 送礼用户UID
-		int64 uid;
+	// 用户UID(2024.05.28更新：因B站API废弃此变量，所以这个固定为0了，参见：open_id)
+	int64 uid;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
+	// 用户唯一标识（2024.05.28更新中添加）
+	FString open_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
 		//送礼用户昵称
 		FString uname;
@@ -178,8 +187,11 @@ struct WUBILIBILISDK_API FSuperChat
 		// 直播间id
 		int64 room_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
-		// 购买用户UID
-		int64 uid;
+	// 用户UID(2024.05.28更新：因B站API废弃此变量，所以这个固定为0了，参见：open_id)
+	int64 uid;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
+	// 用户唯一标识（2024.05.28更新中添加）
+	FString open_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
 		// 购买的用户昵称
 		FString uname;
@@ -289,8 +301,11 @@ struct FLike {
 		//用户昵称
 		FString uname;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
-		//用户UID
-		int64 uid;
+	// 用户UID(2024.05.28更新：因B站API废弃此变量，所以这个固定为0了，参见：open_id)
+	int64 uid;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
+	// 用户唯一标识（2024.05.28更新中添加）
+	FString open_id;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wubilibili")
 		//用户头像
 		FString uface;

@@ -189,10 +189,16 @@ void UWuBiLiBiLiApi::ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr R
 	CallBack callback = *RequestMap.Find(Request);
 
 	RequestMap.Remove(Request);
-
+	
 
 	if (!IsValid(GameInstance)) {
 		UE_LOG(LogClass, Error, TEXT("OnProcessRequestComplete没有GameInstance"));
+		return;
+	}
+	if(!Response)
+	{
+		UE_LOG(LogClass, Error, TEXT("非B站错误码，没有返回值。请检查网络连接"));
+		BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，没有返回值。请检查网络连接"));
 		return;
 	}
 
@@ -206,8 +212,8 @@ void UWuBiLiBiLiApi::ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr R
 
 	FJsonObjectWrapper cotentJson;
 	cotentJson.JsonObjectFromString(Response->GetContentAsString());
-	int32 code = cotentJson.JsonObject->GetIntegerField("code");
-	FString codeMessage = cotentJson.JsonObject->GetStringField("message");
+	int32 code = cotentJson.JsonObject->GetIntegerField(TEXT("code"));
+	FString codeMessage = cotentJson.JsonObject->GetStringField(TEXT("message"));
 
 	if (code == 0) {
 		if (callback) {

@@ -13,6 +13,7 @@ qq：1910991875
 
 #include "CoreMinimal.h"
 #include "IWebSocket.h"
+#include "BiLiBiLiSubsystem.h"
 
 //以下头文件，仅为单独打包插件错误包含。如果不单独打包插件，无需包含
 #include "Engine/EngineTypes.h"
@@ -60,6 +61,7 @@ private:
 	TSharedPtr<IWebSocket> WebSockets;
 	FString Body; //发送心跳包时，发送的信息
 	FString GameId_xintiao; //发送项目心跳时的Data
+	UPROPERTY()
 	const UGameInstance* GameInstance;
 	FTimerHandle heartBeatTimerHandle; //发送心跳包的定时器手柄
 	unsigned char unzipBuffer[UNZIP_BUFF_SIZE];

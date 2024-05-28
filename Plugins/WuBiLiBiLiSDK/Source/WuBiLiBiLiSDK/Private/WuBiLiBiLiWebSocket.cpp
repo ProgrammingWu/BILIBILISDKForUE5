@@ -74,6 +74,10 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 	WebSockets->OnConnected().AddLambda([this]() {
 		UE_LOG(LogClass, Log, TEXT("WebSocket链接成功"));
 		UKismetSystemLibrary::PrintString(this,FString(TEXT("WebSocket链接成功")));
+		if(!GameInstance)
+		{
+			return;
+		}
 		GameInstance->GetSubsystem<UBiLiBiLiSubsystem>()->LinkSuccessEvent.Broadcast();
 		
 		std::stringstream ss;
@@ -140,8 +144,23 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 		UE_LOG(LogClass, Log, TEXT("收到来自服务器的消息：%s"), *MessageString);
 		});
 		*/
-
+#if ((ENGINE_MAJOR_VERSION == 5)&&( ENGINE_MINOR_VERSION>3))
+	WebSockets->OnRawMessage().AddLambda([=,this](const void* Data, SIZE_T  Size, SIZE_T  BytesRemaining) {
+#else
 	WebSockets->OnRawMessage().AddLambda([=](const void* Data, SIZE_T  Size, SIZE_T  BytesRemaining) {
+#endif
+		
+		if(!GameInstance)
+		{
+			return;
+		}
+		if(!Data)
+		{
+			UE_LOG(LogClass, Error, TEXT("非B站错误码，没有返回值。请检查网络连接"));
+			auto BiLiBiLiSubsystem = GameInstance->GetSubsystem<UBiLiBiLiSubsystem>();
+			BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，没有返回值。请检查网络连接"));
+			return;
+		}
 		if (Size != 26)
 		{
 		unsigned char* buffer = (unsigned char*)Data;
@@ -242,21 +261,30 @@ void WuBiLiBiLiWebSocket::OnConnected()
 
 void UWuBiLiBiLiWebSocket::heartBeat()
 {
-	UBiLiBiLiSubsystem* BISubsystem = GameInstance->GetSubsystem<UBiLiBiLiSubsystem>();
+	UBiLiBiLiSubsystem* BISubsystem1 = GameInstance?GameInstance->GetSubsystem<UBiLiBiLiSubsystem>():nullptr;
 	//TSharedPtr<WuBiLiBiLiApi> bapi1 = BISubsystem->bapi;
-	UWuBiLiBiLiApi* bapi1 = BISubsystem->bapi;
+	UWuBiLiBiLiApi* bapi1 = BISubsystem1->bapi;
 	//这里的Lambda函数。设计上，只有成功获得B站服务器的消息，才能被回调。
 	//如果isSuccess为true。就是B站服务器没有返回错误信息。如果是false，B站服务器就返回了错误信息
 	//鉴于大多数错误，都无法走到心跳逻辑这里，在http鉴权的时候就错误了。所以根本走不到这里。
 	//所以这个错误通常是因为网络问题，导致的一分钟内B站服务器没有得到心跳。自动关闭项目，导致房间过期。
 	//所以我在这里的处理是直接断开链接。
-	bapi1->sendheartBeat(GameId_xintiao, [=](bool isSuccess, FString message) {
+#if ((ENGINE_MAJOR_VERSION == 5)&&( ENGINE_MINOR_VERSION>3))
+		bapi1->sendheartBeat(GameId_xintiao, [=,this](bool isSuccess, FString message) {
+#else
+		bapi1->sendheartBeat(GameId_xintiao, [=](bool isSuccess, FString message) {
+#endif
 		if (!WebSockets) {
-			UE_LOG(LogClass, Error, TEXT("WebSocketsIsNull"), *message);
+			UE_LOG(LogClass, Error, TEXT("WebSocketsIsNull"));
 
 			return;
 		}
-
+	
+		UBiLiBiLiSubsystem* BISubsystem =GameInstance?GameInstance->GetSubsystem<UBiLiBiLiSubsystem>():nullptr;
+		if(!BISubsystem)
+		{
+			return;
+		}
 		if (isSuccess) {
 			UE_LOG(LogClass, Log, TEXT("Http心跳包收到服务器消息：%s"), *message);
 
@@ -274,7 +302,7 @@ void UWuBiLiBiLiWebSocket::heartBeat()
 												  0x00, 0x00, 0x00, 0x02,
 												  0x00, 0x00, 0x00, 0x01 };
 					WebSockets->Send(heartBeatData, sizeof(heartBeatData), true);
-
+					UE_LOG(LogClass, Log, TEXT("WebSockte心跳包发送到服务"));
 				}else {
 					WebSockets->Connect();//尝试重连
 					UE_LOG(LogClass, Error, TEXT("WebSockte心跳包发送到服务器失败，原因：没有和服务器链接,已自动尝试重连"));

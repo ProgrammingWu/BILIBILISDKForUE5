@@ -1,0 +1,14 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\private\\wubilibilisdk.cpp",
+        "ProvidedModule": "",
+        "PCH": "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\intermediate\\build\\win64\\x64\\bilibiliprojecteditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.cpp20.inclorderoldest.h.pch",
+        "Includes": [
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\wubilibilisdk\\definitions.wubilibilisdk.h",
+            "g:\\xiangmucheshi\\svnnei\\tempbilibiliproject\\game\\bilibiliproject\\plugins\\wubilibilisdk\\source\\wubilibilisdk\\public\\wubilibilisdk.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

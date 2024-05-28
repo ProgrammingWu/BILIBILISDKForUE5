@@ -130,10 +130,12 @@ public:
 	int64 AppId;
 
 	//TSharedPtr<WuBiLiBiLiApi> bapi;
+	UPROPERTY()
 	UWuBiLiBiLiApi* bapi;
 private:
 	void ProcessingWebSocketData(bool isSuccess, FString message);
 
 	FString game_idstr;//当Http鉴权成功后，返回的GameID。用于心跳和项目关闭
+	UPROPERTY()
 	UWuBiLiBiLiWebSocket* BIWebSocket;
 };
