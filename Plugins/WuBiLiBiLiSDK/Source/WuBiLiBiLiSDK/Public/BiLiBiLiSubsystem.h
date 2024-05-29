@@ -68,6 +68,7 @@ class WUBILIBILISDK_API UBiLiBiLiSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 public:
+	UBiLiBiLiSubsystem();
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

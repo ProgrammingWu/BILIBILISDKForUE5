@@ -23,7 +23,7 @@ qq：1910991875
 
 
 
-UWuBiLiBiLiApi::UWuBiLiBiLiApi()
+UWuBiLiBiLiApi::UWuBiLiBiLiApi(): GameInstance(nullptr), BiLiBiLiSubsystem(nullptr)
 {
 }
 
@@ -43,8 +43,22 @@ UWuBiLiBiLiApi::~UWuBiLiBiLiApi()
 
 void UWuBiLiBiLiApi::init(UGameInstance* gameInstance)
 {
+	if(!gameInstance)
+	{
+		UE_LOG(LogClass, Error, TEXT("UWuBiLiBiLiApi::init: gameInstance Is Null"));
+		UE_LOG(LogClass, Log, TEXT("HTTP通信初始化失败(构造)"));
+		UKismetSystemLibrary::PrintString(this, FString(TEXT("HTTP通信初始化失败(构造)")));
+		return;
+	}
 	GameInstance = gameInstance;
 	BiLiBiLiSubsystem = GameInstance->GetSubsystem<UBiLiBiLiSubsystem>();
+	if(!BiLiBiLiSubsystem)
+	{
+		UE_LOG(LogClass, Error, TEXT("UWuBiLiBiLiApi::init: BiLiBiLiSubsystem Is Null"));
+		UE_LOG(LogClass, Log, TEXT("HTTP通信初始化失败(构造)"));
+		UKismetSystemLibrary::PrintString(this, FString(TEXT("HTTP通信初始化失败(构造)")));
+		return;
+	}
 	UE_LOG(LogClass, Log, TEXT("HTTP通信初始化完成(构造)"));
 	UKismetSystemLibrary::PrintString(this, FString(TEXT("HTTP通信初始化完成(构造)")));
 }
@@ -61,8 +75,18 @@ void UWuBiLiBiLiApi::getWebSocketData(CallBack callback)
 		UE_LOG(LogClass, Error, TEXT("Game Instance Is Null"));
 		return;
 	}
+	if(!BiLiBiLiSubsystem)
+	{
+		UE_LOG(LogClass, Error, TEXT("BiLiBiLiSubsystem Is Null"));
+		return;
+	}
 
 	FJsonObjectWrapper data;
+	if(!data.JsonObject)
+	{
+		UE_LOG(LogClass, Error, TEXT("错误。getWebSocketData的Json没有创建成功"));
+		return;
+	}
 	data.JsonObject->SetStringField(TEXT("code"), BiLiBiLiSubsystem->Code);
 	//data.JsonObject->SetStringField(TEXT("app_id"), BiLiBiLiSubsystem->AppId);
 	//data.JsonObject->SetStringField(TEXT("app_id"), BiLiBiLiSubsystem->AppId);
@@ -72,13 +96,18 @@ void UWuBiLiBiLiApi::getWebSocketData(CallBack callback)
 	data.JsonObjectToString(datastr);
 
 	sendHttpRequest( TEXT("https://live-open.biliapi.com/v2/app/start"), datastr, callback);
-	//UE_LOG(LogClass, Log, TEXT("Http请求发送完成"));
+	UE_LOG(LogClass, Log, TEXT("获取长链信息的Http请求发送完成"));
 	//callback(false, TEXT("Call back Http请求发送完成"));
 }
 
 void UWuBiLiBiLiApi::sendheartBeat(const FString& GameID, CallBack callback)
 {
 	FJsonObjectWrapper data;
+	if(!data.JsonObject)
+	{
+		UE_LOG(LogClass, Error, TEXT("错误。sendheartBeat的Json没有创建成功"));
+		return;
+	}
 	data.JsonObject->SetStringField(TEXT("game_id"), GameID);
 	FString datastr;
 	data.JsonObjectToString(datastr);
@@ -91,6 +120,11 @@ void UWuBiLiBiLiApi::sendheartBeat(const FString& GameID, CallBack callback)
 void UWuBiLiBiLiApi::sendEnd(const FString& GameID, const int64& APPID, CallBack callback)
 {
 	FJsonObjectWrapper data;
+	if(!data.JsonObject)
+	{
+		UE_LOG(LogClass, Error, TEXT("错误。sendEnd的Json没有创建成功"));
+		return;
+	}
 	data.JsonObject->SetStringField(TEXT("game_id"), GameID);
 	//data.JsonObject->SetStringField(TEXT("app_id"), APPID);
 	data.JsonObject->SetNumberField(TEXT("app_id"), APPID);
@@ -113,7 +147,11 @@ void UWuBiLiBiLiApi::sendHttpRequest(FString url, FString Data, CallBack callbac
 		UE_LOG(LogClass, Error, TEXT("Game Instance Is Null"));
 		return;
 	}
-
+	if(!BiLiBiLiSubsystem)
+	{
+		UE_LOG(LogClass, Error, TEXT("BiLiBiLiSubsystem Is Null"));
+		return;
+	}
 
 
 	TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
@@ -181,18 +219,39 @@ void UWuBiLiBiLiApi::sendHttpRequest(FString url, FString Data, CallBack callbac
 		UE_LOG(LogClass, Error, TEXT("非B站错误码，Http链接启动错误"));
 		BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，Http链接启动错误"));
 		UKismetSystemLibrary::PrintString(this, FString(TEXT("非B站错误码，Http链接启动错误")));
+	}else
+	{
+		UE_LOG(LogClass, Log, TEXT("Http请求发送成功"));
 	}
 }
 
 void UWuBiLiBiLiApi::ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully)
 {
-	CallBack callback = *RequestMap.Find(Request);
-
-	RequestMap.Remove(Request);
+	CallBack* callbackPtr = RequestMap.Find(Request);
+	CallBack callback = nullptr;
+	if(callbackPtr)
+	{
+		callback = *callbackPtr;	
+	}
+	if(!callback)
+	{
+		UE_LOG(LogClass, Error, TEXT("非B站错误码，没有找到回调函数"));
+	}
 	
-
+	RequestMap.Remove(Request);
 	if (!IsValid(GameInstance)) {
 		UE_LOG(LogClass, Error, TEXT("OnProcessRequestComplete没有GameInstance"));
+		return;
+	}
+	if(!BiLiBiLiSubsystem)
+	{
+		UE_LOG(LogClass, Error, TEXT("BiLiBiLiSubsystem Is Null"));
+		return;
+	}
+	if(!bConnectedSuccessfully)
+	{
+		UE_LOG(LogClass, Error, TEXT("Http请求失败，没有成功连接，请检查网络连接"));
+		BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，Http请求失败，没有成功连接，请检查网络连接"));
 		return;
 	}
 	if(!Response)
@@ -201,6 +260,14 @@ void UWuBiLiBiLiApi::ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr R
 		BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，没有返回值。请检查网络连接"));
 		return;
 	}
+	if(!Request)
+	{
+		UE_LOG(LogClass, Error, TEXT("非B站错误码，没有返回值。请检查网络连接"));
+		BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，没有返回值。请检查网络连接"));
+		return;
+	}
+	
+
 
 	int32 responseCode = Response->GetResponseCode();
 	if (!(responseCode == 200)) {
@@ -212,6 +279,11 @@ void UWuBiLiBiLiApi::ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr R
 
 	FJsonObjectWrapper cotentJson;
 	cotentJson.JsonObjectFromString(Response->GetContentAsString());
+	if(!cotentJson.JsonObject)
+	{
+		UE_LOG(LogClass, Error, TEXT("错误，解析B站返回的消息失败。Json没有创建成功"));
+		return;
+	}
 	int32 code = cotentJson.JsonObject->GetIntegerField(TEXT("code"));
 	FString codeMessage = cotentJson.JsonObject->GetStringField(TEXT("message"));
 
@@ -230,7 +302,7 @@ void UWuBiLiBiLiApi::ReceivedMessage(FHttpRequestPtr Request, FHttpResponsePtr R
 		}
 		//callback(false, Response->GetContentAsString());
 	}
-	//UE_LOG(LogClass, Log, TEXT("收到服务器消息，已调用回调函数处理"));
+	UE_LOG(LogClass, Log, TEXT("收到服务器消息，已调用回调函数处理"));
 
 }
 

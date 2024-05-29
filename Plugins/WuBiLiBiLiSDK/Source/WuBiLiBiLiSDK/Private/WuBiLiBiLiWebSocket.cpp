@@ -25,7 +25,7 @@ qq：1910991875
 
 
 
-UWuBiLiBiLiWebSocket::UWuBiLiBiLiWebSocket()
+UWuBiLiBiLiWebSocket::UWuBiLiBiLiWebSocket(): unzipBuffer{}
 {
 	WebSockets = nullptr;
 	GameInstance = nullptr;
@@ -61,7 +61,11 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 		FModuleManager::Get().LoadModule("WebSockets");
 	}
 	WebSockets = FWebSocketsModule::Get().CreateWebSocket(url, TEXT("ws")); //创建webSocket链接
-
+	if(!WebSockets)
+	{
+		UE_LOG(LogClass, Error, TEXT("错误，UWuBiLiBiLiWebSocket::createWebSocket创建WebSockets失败"));
+		return;
+	}
 	WebSockets->OnClosed().AddLambda([=](int32  StatusCode, const FString& Reason, bool  bWasClean) {
 		UE_LOG(LogClass, Log, TEXT("WebSocket关闭,Code:%d。消息：%s"), StatusCode, *Reason);
 		/*
@@ -76,9 +80,18 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 		UKismetSystemLibrary::PrintString(this,FString(TEXT("WebSocket链接成功")));
 		if(!GameInstance)
 		{
+			UE_LOG(LogClass, Error, TEXT("错误，WebSockets->OnConnected()获取GameInstance失败"));
 			return;
 		}
-		GameInstance->GetSubsystem<UBiLiBiLiSubsystem>()->LinkSuccessEvent.Broadcast();
+		auto UBiLiBiLiSubsystemPtr =  GameInstance->GetSubsystem<UBiLiBiLiSubsystem>();
+		if(UBiLiBiLiSubsystemPtr)
+		{
+			UBiLiBiLiSubsystemPtr->LinkSuccessEvent.Broadcast();	
+		}else
+		{
+			UE_LOG(LogClass, Error, TEXT("错误，WebSockets->OnConnected()获取UBiLiBiLiSubsystem失败"));
+			return;
+		}
 		
 		std::stringstream ss;
 		TArray<unsigned char> buffer;
@@ -121,8 +134,16 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 			//CallbackError(ERROR_WEBSOCKET_CONNECT);
 			return;
 		}
+		if(!WebSockets)
+		{
+			return;
+		}
 		WebSockets->Send(roomPack.data(), roomPack.size(), true);
 
+		if(!(GameInstance&&GameInstance->GetWorld()))
+		{
+			return;
+		}
 		if (heartBeatTimerHandle.IsValid()) { //如果是重连的话，就移除老心跳计时器
 			GameInstance->GetWorld()->GetTimerManager().ClearTimer(heartBeatTimerHandle);
 		}
@@ -152,12 +173,17 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 		
 		if(!GameInstance)
 		{
+			UE_LOG(LogClass, Error, TEXT("错误，WebSockets->OnConnected()获取GameInstance失败"));
 			return;
 		}
 		if(!Data)
 		{
 			UE_LOG(LogClass, Error, TEXT("非B站错误码，没有返回值。请检查网络连接"));
 			auto BiLiBiLiSubsystem = GameInstance->GetSubsystem<UBiLiBiLiSubsystem>();
+			if (!BiLiBiLiSubsystem) {
+				UE_LOG(LogClass, Error, TEXT("错误，gameInstance参数为空d"));
+				return;
+			}
 			BiLiBiLiSubsystem->ErrorEvent.Broadcast(0, TEXT("非B站错误码，没有返回值。请检查网络连接"));
 			return;
 		}
@@ -206,7 +232,10 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 							// 然后就是处理数据了 ...
 							//CallbackMessage(data);
 							//UTF8_TO_TCHAR(data.data());
-							callback(true, UTF8_TO_TCHAR(data.data()));
+							if(callback)
+							{
+								callback(true, UTF8_TO_TCHAR(data.data()));	
+							}
 							//处理完这个子包后记得将大包处理位置进行偏移
 							allsize += packetLength2;
 
@@ -219,7 +248,10 @@ void UWuBiLiBiLiWebSocket::createWebSocket(const FString& url, const FString& bo
 					UE_LOG(LogClass, Log, TEXT("服务器消息没用使用zlib压缩"));
 					memcpy(unzipBuffer, buffer + 16, packetLength - 16);
 					unzipBuffer[packetLength - 16] = '\0';
-					callback(true, UTF8_TO_TCHAR((const char*)unzipBuffer));
+					if(callback)
+					{
+						callback(true, UTF8_TO_TCHAR((const char*)unzipBuffer));
+					}
 					//CallbackMessage((const char*)unzipBuffer);
 				}
 			}
@@ -243,7 +275,10 @@ void UWuBiLiBiLiWebSocket::End()
 
 	}
 	if (heartBeatTimerHandle.IsValid()) { //如果有心跳定时器。那么就移除他
-		GameInstance->GetWorld()->GetTimerManager().ClearTimer(heartBeatTimerHandle);
+		if(GameInstance&&GameInstance->GetWorld())
+		{
+			GameInstance->GetWorld()->GetTimerManager().ClearTimer(heartBeatTimerHandle);	
+		}
 	}
 }
 
@@ -262,8 +297,18 @@ void WuBiLiBiLiWebSocket::OnConnected()
 void UWuBiLiBiLiWebSocket::heartBeat()
 {
 	UBiLiBiLiSubsystem* BISubsystem1 = GameInstance?GameInstance->GetSubsystem<UBiLiBiLiSubsystem>():nullptr;
+	if(!BISubsystem1)
+	{
+		UE_LOG(LogClass, Error, TEXT("心跳包错误BISubsystem1为空"));
+		return;
+	}
 	//TSharedPtr<WuBiLiBiLiApi> bapi1 = BISubsystem->bapi;
 	UWuBiLiBiLiApi* bapi1 = BISubsystem1->bapi;
+		if(!bapi1)
+		{
+			UE_LOG(LogClass, Error, TEXT("心跳包错误bapi1为空"));
+			return;
+		}
 	//这里的Lambda函数。设计上，只有成功获得B站服务器的消息，才能被回调。
 	//如果isSuccess为true。就是B站服务器没有返回错误信息。如果是false，B站服务器就返回了错误信息
 	//鉴于大多数错误，都无法走到心跳逻辑这里，在http鉴权的时候就错误了。所以根本走不到这里。
@@ -283,6 +328,7 @@ void UWuBiLiBiLiWebSocket::heartBeat()
 		UBiLiBiLiSubsystem* BISubsystem =GameInstance?GameInstance->GetSubsystem<UBiLiBiLiSubsystem>():nullptr;
 		if(!BISubsystem)
 		{
+			UE_LOG(LogClass, Error, TEXT("心跳包错误BISubsystem为空"));
 			return;
 		}
 		if (isSuccess) {
@@ -291,7 +337,6 @@ void UWuBiLiBiLiWebSocket::heartBeat()
 			//如果Http心跳包成功获得服务器返回，而且没有错误的消息。那么就发送WebSocket心跳包。这样也能保证如果断开就重连
 			//一定要等到Http心跳包成功。而且没有错误，才执行这步的原因是。B站那边Http因为没有收到心跳包，超时关闭后，WebSocket还可以正常链接。
 			//所以才在这里等Http心跳包成功在执行WebSocket的步骤
-			
 				if (WebSockets->IsConnected()) { //如果和服务器链接
 					//WebSockets->Send(Body); //发送消息
 
@@ -312,7 +357,8 @@ void UWuBiLiBiLiWebSocket::heartBeat()
 		else {
 			BISubsystem->DisconnectWebSocketEvent.Broadcast(message); //发送断开链接的事件，好让他们自己实现重新鉴权并链接
 			UE_LOG(LogClass, Error, TEXT("Http心跳包错误。链接已断开，请尝试手动重连，错误信息：%s"), *message);
-			GameInstance->GetWorld()->GetTimerManager().ClearTimer(heartBeatTimerHandle);
+			if(GameInstance&&GameInstance->GetWorld())
+				GameInstance->GetWorld()->GetTimerManager().ClearTimer(heartBeatTimerHandle);
 		}
 		});
 }

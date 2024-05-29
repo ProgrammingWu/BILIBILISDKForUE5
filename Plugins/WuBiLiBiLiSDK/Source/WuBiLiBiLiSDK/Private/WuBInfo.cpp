@@ -43,22 +43,22 @@ FComboInfo::FComboInfo()
 	combo_timeout = 0;
 }
 
-FGift::FGift()
+FGift::FGift(): combo_gift(false)
 {
-	room_id =0;
-	uid =0;
+	room_id = 0;
+	uid = 0;
 	uname = TEXT("");
 	uface = TEXT("");
-	gift_id =0;
+	gift_id = 0;
 	gift_name = TEXT("");
-	gift_num =0;
-	price =0;
+	gift_num = 0;
+	price = 0;
 	paid = false;
-	fans_medal_level =0;
+	fans_medal_level = 0;
 	fans_medal_name = TEXT("");
 	fans_medal_wearing_status = false;
-	guard_level =0;
-	timestamp =0;
+	guard_level = 0;
+	timestamp = 0;
 	FUserInfo userinfo;
 	anchor_info = userinfo;
 	msg_id = TEXT("");
@@ -66,7 +66,6 @@ FGift::FGift()
 	bool haveComboGift = false;
 	FComboInfo comboinfo1;
 	combo_info = comboinfo1;
-
 }
 
 FSuperChat::FSuperChat()

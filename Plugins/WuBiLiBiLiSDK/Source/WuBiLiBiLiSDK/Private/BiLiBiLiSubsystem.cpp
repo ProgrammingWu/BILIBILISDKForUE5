@@ -17,12 +17,20 @@ qq：1910991875
 #include "Dom/JsonObject.h"
 #include "Kismet/KismetSystemLibrary.h" //Kismet
 
+UBiLiBiLiSubsystem::UBiLiBiLiSubsystem(): AppId(0), bapi(nullptr), BIWebSocket(nullptr)
+{
+}
+
 void UBiLiBiLiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	BIWebSocket = nullptr;
 	//bapi = MakeShareable(new WuBiLiBiLiApi(this->GetOuterUGameInstance()));
 	bapi = NewObject<UWuBiLiBiLiApi>();
-	
+	if(!bapi)
+	{
+		UE_LOG(LogClass,Error,TEXT("UBiLiBiLiSubsystem子系统创建Http管理器失败"));
+		return;
+	}
 	bapi->init(GetOuterUGameInstance());
 	UE_LOG(LogClass,Log,TEXT("加载UBiLiBiLiSubsystem子系统"));
 	UKismetSystemLibrary::PrintString(this, FString(TEXT("加载UBiLiBiLiSubsystem子系统")));
@@ -59,25 +67,54 @@ void UBiLiBiLiSubsystem::init(FString accessKeyId, FString accessKeySecret, int6
 void UBiLiBiLiSubsystem::start()
 {
 	UKismetSystemLibrary::PrintString(this, FString(TEXT("开始连接")));
+	if(!bapi)
+	{
+		UE_LOG(LogClass,Error,TEXT("UBiLiBiLiSubsystem子系统初始化时没有创建bapi，start启动失败"));
+		ErrorEvent.Broadcast(0,TEXT("错误: 启动长链失败，UBiLiBiLiSubsystem子系统初始化时没有创建bapi，start启动失败"));
+		return;
+	}
 	bapi->getWebSocketData([this](bool isSuccess, FString message) {
 		if (isSuccess) {
 			//UE_LOG(LogClass, Log, TEXT("成功，信息：%s"), *message);
 			FJsonObjectWrapper messageJson;
 			messageJson.JsonObjectFromString(message);
-
+			if(!messageJson.JsonObject)
+			{
+				UE_LOG(LogClass, Error, TEXT("错误，解析场次信息失败。没有成功创建Json对象"));
+				ErrorEvent.Broadcast(0,TEXT("错误: 启动长链失败，解析场次信息失败。没有成功创建Json对象"));
+				return;
+			}
 			//=========解析信息============
 			TSharedPtr<FJsonObject> dataJson = messageJson.JsonObject->GetObjectField(TEXT("data"));
+			if(!dataJson)
+			{
+				UE_LOG(LogClass, Error, TEXT("错误，解析场次信息失败。没有成功创建Json对象"));
+				ErrorEvent.Broadcast(0,TEXT("错误: 启动长链失败，解析场次信息失败。没有成功创建Json对象"));
+				return;
+			}
 			//-------------解析场次信息------------
 			// 用于保持项目心跳的GameID
 			game_idstr = dataJson->GetObjectField(TEXT("game_info"))->GetStringField(TEXT("game_id")); 
 			//----------解析长链信息---------------
 			TSharedPtr<FJsonObject> websocket_infoJson = dataJson->GetObjectField(TEXT("websocket_info"));
+			if(!websocket_infoJson)
+			{
+				UE_LOG(LogClass, Error, TEXT("错误，解析场次信息失败。没有成功创建Json对象"));
+				ErrorEvent.Broadcast(0,TEXT("错误: 启动长链失败，解析场次信息失败。没有成功创建Json对象"));
+				return;
+			}
 			FString auth_body = websocket_infoJson->GetStringField(TEXT("auth_body")); //保持长链心跳，发送的消息
 
 
 			TArray<TSharedPtr<FJsonValue>>wss_links =  websocket_infoJson->GetArrayField(TEXT("wss_link"));
 			TArray<FString> wss_linkStrs; //长链地址
 			for (auto wss_link : wss_links) {
+				if(!wss_link)
+				{
+					UE_LOG(LogClass, Error, TEXT("错误，解析场次信息失败。没有成功创建Json对象"));
+					ErrorEvent.Broadcast(0,TEXT("错误: 启动长链失败，解析场次信息失败。没有成功创建Json对象"));
+					return;
+				}
 				wss_linkStrs.Add(wss_link->AsString());
 			}
 			//UE_LOG(LogClass, Log, TEXT("GameID：%s"), *game_idstr);
@@ -87,6 +124,12 @@ void UBiLiBiLiSubsystem::start()
 			//-----新建长链------------
 			if (!BIWebSocket) {
 				BIWebSocket = NewObject<UWuBiLiBiLiWebSocket>();
+			}
+			if(!BIWebSocket)
+			{
+				UE_LOG(LogClass, Error, TEXT("错误:没有成功创建BIWebSocket对象"));
+				ErrorEvent.Broadcast(0,TEXT("错误: 启动长链失败，没有成功创建BIWebSocket对象"));
+				return;
 			}
 			BIWebSocket->createWebSocket(wss_linkStrs[0], auth_body, game_idstr, GetOuterUGameInstance(), [this](bool isSuccess, FString message) {
 				
@@ -129,8 +172,20 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 	if (isSuccess) {
 		FJsonObjectWrapper messageJson;
 		messageJson.JsonObjectFromString(message);
+		if(!messageJson.JsonObject)
+		{
+			UE_LOG(LogClass, Error, TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+			ErrorEvent.Broadcast(0,TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+			return;
+		}
 		FString cmdstr = messageJson.JsonObject->GetStringField(TEXT("cmd"));
 		TSharedPtr<FJsonObject> dataJson = messageJson.JsonObject->GetObjectField(TEXT("data"));
+		if(!dataJson)
+		{
+			UE_LOG(LogClass, Error, TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+			ErrorEvent.Broadcast(0,TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+			return;
+		}
 		if (cmdstr.Equals(TEXT("LIVE_OPEN_PLATFORM_DM"))) {
 			//FString msgstr = dataJson->GetStringField(TEXT("msg"));
 			FDanMu danmu;
@@ -173,6 +228,12 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			gift.timestamp = dataJson->GetNumberField(TEXT("timestamp"));
 			//主播信息
 			TSharedPtr<FJsonObject> anchor_infoJson = dataJson->GetObjectField(TEXT("anchor_info"));
+			if(!anchor_infoJson)
+			{
+				UE_LOG(LogClass, Error, TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+				ErrorEvent.Broadcast(0,TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+				return;
+			}
 			FUserInfo userinfo;
 			userinfo.uid = anchor_infoJson->GetNumberField(TEXT("uid"));
 			userinfo.open_id = anchor_infoJson->GetStringField(TEXT("open_id"));
@@ -221,7 +282,14 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			superchatd.room_id = dataJson->GetNumberField(TEXT("room_id"));
 			TArray<TSharedPtr<FJsonValue>> message_idsJsons = dataJson->GetArrayField(TEXT("message_ids"));
 			for (auto message_idsJsonValue : message_idsJsons) {
-				superchatd.message_ids.Add(message_idsJsonValue->AsNumber());
+				if(!message_idsJsonValue)
+				{
+					UE_LOG(LogClass, Error, TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+					ErrorEvent.Broadcast(0,TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+				}else
+				{
+					superchatd.message_ids.Add(message_idsJsonValue->AsNumber());	
+				}
 			}
 			superchatd.msg_id = dataJson->GetStringField(TEXT("msg_id"));
 			SuperChatDelEvent.Broadcast(superchatd);
@@ -231,6 +299,11 @@ void UBiLiBiLiSubsystem::ProcessingWebSocketData(bool isSuccess, FString message
 			FGuard guard;
 			//用户信息
 			TSharedPtr<FJsonObject> user_infoJson = dataJson->GetObjectField(TEXT("user_info"));
+			if(!user_infoJson)
+			{
+				UE_LOG(LogClass, Error, TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+				ErrorEvent.Broadcast(0,TEXT("错误，解析长链信息失败。没有成功创建Json对象"));
+			}
 			FUserInfo userinfo;
 			userinfo.uid = user_infoJson->GetNumberField(TEXT("uid"));
 			userinfo.open_id = user_infoJson->GetStringField(TEXT("open_id"));
